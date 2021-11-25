@@ -17,11 +17,40 @@
  * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  *
- * @details version Seeduino v4.2
+ * @details
+ *  version Seeduino v4.2  + Baseshield
+ * 
+ *  Limit Sensor wires of the ARM: 
+ * Blue:  VDD 5V
+ * Brown: GND
+ * Black: Sensor:
+ * Sensor Normaly LED on
+ *    On limit ->Led OFF, -> black Wire 5V
+ * 
+ *
+ *  RS232 Connector  (soldering side)  
+ *     
+ *        M+            LI     S-
+ *         5    4   3    2     1
+ *         |   |    |    |     |
+ * 
+ *           |    |    |    |
+ *           9    8    7    6 
+ *          M+         LO     S+
+ * M+: / M- motor connections
+ * S+: Sensor VDD 5v 
+ * S-: Sensor GND 0v 
+ * SI: Limit sensor IN
+ * SO: Limit sensor OUT
+ * 
  */
 
 
 #include <Arduino.h>
+
+/** Seeeduino v4.2 Specific **/
+#define LED_OFF LOW
+#define LED_ON HIGH
 
 #define LED_OUT 2 // PD2  // e.g. blue LED
 //#define BLUE_SWITCH PIN_WIRE_SDA
@@ -30,11 +59,12 @@
 #define LED_IN 4   // e.g. Red LED
 #define RED_SWITCH 5 // PD5
 
-#define LIMIT_IN 9 // PD6
-#define LIMIT_OUT  8
+#define LIMIT_IN 7 // PD6
+#define LIMIT_OUT  6  // Grove Yellow
 
 #define RELAY_IN SDA
 #define RELAY_OUT SCL // PB0
+/** end Seeeduino v4.2 Specific **/
 
 bool sensorLimIn, sensorLimOut;
 bool switchIn, switchOut;
@@ -49,7 +79,8 @@ enum arm_state
   moving_in,
   moving_out,
   fully_closed,
-  fully_open
+  fully_open,
+  error
 } state;
 
 //#define LED_PIN 13
@@ -63,10 +94,10 @@ const char* getStateName(enum arm_state state)
       case moving_out: return "Moving Out";
       case fully_closed: return "Closed";
       case fully_open: return  "Open";
+      case error: return  "Error";
       default: return "";
    }
 }
-
 
 void setup()
 {
@@ -77,8 +108,8 @@ void setup()
   pinMode(RELAY_IN, OUTPUT);
   pinMode(RELAY_OUT, OUTPUT);
 
-  pinMode(BLUE_SWITCH, INPUT); // INPUT_PULLUP  /Grove switch has pull up
-  pinMode(RED_SWITCH, INPUT);
+  pinMode(BLUE_SWITCH, INPUT_PULLUP); // 
+  pinMode(RED_SWITCH, INPUT_PULLUP);
 
   pinMode(LIMIT_OUT, INPUT_PULLUP);
   pinMode(LIMIT_IN,  INPUT_PULLUP);
@@ -108,41 +139,53 @@ void loop()     //fast Loop
   case stopped:
     digitalWrite(RELAY_IN, LOW);
     digitalWrite(RELAY_OUT, LOW);
-    digitalWrite(LED_OUT, LOW);
-    digitalWrite(LED_IN, LOW);
-    if (now > holding) {
+    digitalWrite(LED_OUT, LED_OFF);
+    digitalWrite(LED_IN, LED_OFF);
+    if (sensorLimIn && sensorLimOut ) 
+        state = error;
+    else if (sensorLimIn && !sensorLimOut ) 
+        state = fully_closed;    
+    else if (!sensorLimIn && sensorLimOut ) 
+        state = fully_open;    
+    else if (now > holding) {
       if (switchIn && !sensorLimIn ){
-          holding = now + debounce;
+           holding = now + debounce;
           state = moving_in;
           Serial.println(F("STOP->MOV_IN"));
 
       }
-      else if (switchOut && !sensorLimOut ){
+       else if (switchOut && !sensorLimOut ){
         holding = now + debounce;
         state = moving_out;
       }
     }
-  //digitalWrite(RELAY_IN, HIGH);
     break;
   case moving_in:
-    digitalWrite(RELAY_IN, HIGH);
-    digitalWrite(RELAY_OUT, LOW);
-    digitalWrite(LED_OUT, LOW); //
-    digitalWrite(LED_IN, HIGH);
-    if (sensorLimIn){
-      state = fully_closed;
-    }
-    else if (( switchIn && (now > holding)) || switchOut){
-      holding = now + debounce2;
-      state = stopped;
-      Serial.println(F("MOV_IN->STOP")) ;
+    if (sensorLimIn && sensorLimOut ) 
+        state = error;
+    else {
+      digitalWrite(RELAY_IN, HIGH);
+      digitalWrite(RELAY_OUT, LOW);
+      digitalWrite(LED_OUT, LED_OFF); //
+      digitalWrite(LED_IN, LED_ON);
+      if (sensorLimIn){
+        state = fully_closed;
+      }
+      else if (( switchIn && (now > holding)) || switchOut){
+        holding = now + debounce2;
+        state = stopped;
+        Serial.println(F("MOV_IN->STOP")) ;
+      }
     }
     break;
   case moving_out:
+    if (sensorLimIn && sensorLimOut ) 
+        state = error;
+    else {
       digitalWrite(RELAY_OUT, HIGH);
       digitalWrite(RELAY_IN, LOW);
-      digitalWrite(LED_OUT, HIGH);
-      digitalWrite(LED_IN, LOW);
+      digitalWrite(LED_OUT, LED_ON);
+      digitalWrite(LED_IN, LED_OFF);
       if (sensorLimOut){
       //Serial.println(F("Moving->fully_open"));
         state = fully_open;
@@ -153,24 +196,43 @@ void loop()     //fast Loop
         state = stopped;
         //Serial.println(F("OUT->STOP"));
       }
+    }
     break;    
   case fully_closed:
+    if (sensorLimIn && sensorLimOut ) 
+        state = error;
+    else {
       digitalWrite(RELAY_IN, LOW);
       digitalWrite(RELAY_OUT, LOW);
       if (switchOut) {
         //holding = now + debounce2;
         state = moving_out;
       }
-    break;
-  case fully_open:
-    digitalWrite(RELAY_IN, LOW);
-    digitalWrite(RELAY_OUT, LOW);
-    // Blinking on loop2
-    if (switchIn){
-      //holding = now + debounce2;
-      state = moving_in;
     }
     break;
+  case fully_open:
+    if (sensorLimIn && sensorLimOut ) 
+        state = error;
+    else {
+      digitalWrite(RELAY_IN, LOW);
+      digitalWrite(RELAY_OUT, LOW);
+      // Blinking on loop2
+      if (switchIn) {
+        //holding = now + debounce2;
+        state = moving_in;
+      }
+    }
+    break;
+  case error:
+      digitalWrite(RELAY_IN, LOW);
+      digitalWrite(RELAY_OUT, LOW);
+      if (sensorLimIn && !sensorLimOut ) 
+        state = fully_closed;         
+      else if ( !sensorLimIn && sensorLimOut ) 
+        state = fully_open;      
+      else if ( !sensorLimIn && !sensorLimOut ) 
+        state = stopped;      
+    break;    
   default:;
   }
 
@@ -198,6 +260,10 @@ void loop2() {
         break;          
       case fully_open:  
           digitalWrite(LED_IN, LED_OFF);
+          digitalWrite(LED_OUT, led_state); 
+        break;          
+      case error:  
+          digitalWrite(LED_IN, led_state);
           digitalWrite(LED_OUT, led_state); 
       default:;
     }

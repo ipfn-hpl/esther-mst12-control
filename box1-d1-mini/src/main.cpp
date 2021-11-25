@@ -35,7 +35,7 @@
  * Sensor Normally LED on
  *    On limit ->Led OFF, ->black 5V
  *
- *  RS232 Coonector  (soldering side)      
+ *  RS232 Connector  (soldering side)      
  *  
  *         5    4   3    2     1
  *         |   |    |    |     |
