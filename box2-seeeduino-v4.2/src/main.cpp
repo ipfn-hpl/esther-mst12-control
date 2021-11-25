@@ -26,16 +26,18 @@
 #define LED_OUT 2 // PD2  // e.g. blue LED
 //#define BLUE_SWITCH PIN_WIRE_SDA
 #define BLUE_SWITCH 3 // PD3
+
 #define LED_IN 4   // e.g. Red LED
 #define RED_SWITCH 5 // PD5
 
-#define LIMIT_IN 6 // PD6
-#define LIMIT_OUT  7 // PD7
+#define LIMIT_IN 9 // PD6
+#define LIMIT_OUT  8
 
 #define RELAY_IN SDA
 #define RELAY_OUT SCL // PB0
 
 bool sensorLimIn, sensorLimOut;
+bool switchIn, switchOut;
 unsigned long holding ;
 
 void loop2();
@@ -46,8 +48,8 @@ enum arm_state
   stopped,
   moving_in,
   moving_out,
-  limit_in,
-  limit_out
+  fully_closed,
+  fully_open
 } state;
 
 //#define LED_PIN 13
@@ -59,8 +61,8 @@ const char* getStateName(enum arm_state state)
       case stopped: return    "Stopped";
       case moving_in: return  "Moving In";
       case moving_out: return "Moving Out";
-      case limit_in: return   "Limit In";
-      case limit_out: return  "Limit Out";
+      case fully_closed: return "Closed";
+      case fully_open: return  "Open";
       default: return "";
    }
 }
@@ -74,12 +76,14 @@ void setup()
   pinMode(LED_IN, OUTPUT);
   pinMode(RELAY_IN, OUTPUT);
   pinMode(RELAY_OUT, OUTPUT);
-  pinMode(BLUE_SWITCH, INPUT);
+
+  pinMode(BLUE_SWITCH, INPUT); // INPUT_PULLUP  /Grove switch has pull up
   pinMode(RED_SWITCH, INPUT);
 
-  pinMode(LIMIT_OUT, INPUT);
-  pinMode(LIMIT_IN,  INPUT);
+  pinMode(LIMIT_OUT, INPUT_PULLUP);
+  pinMode(LIMIT_IN,  INPUT_PULLUP);
 
+  state = stopped;
   // Start serial port
   Serial.begin(115200);
 }
@@ -94,6 +98,8 @@ void loop()     //fast Loop
 
   sensorLimIn = digitalRead(LIMIT_IN);
   sensorLimOut = digitalRead(LIMIT_OUT);
+  switchIn = !digitalRead(RED_SWITCH); // red
+  switchOut = !digitalRead(BLUE_SWITCH);  // blue
 
   unsigned long now = millis();
 
@@ -105,13 +111,13 @@ void loop()     //fast Loop
     digitalWrite(LED_OUT, LOW);
     digitalWrite(LED_IN, LOW);
     if (now > holding) {
-      if (!digitalRead(RED_SWITCH) && !sensorLimIn ){
+      if (switchIn && !sensorLimIn ){
           holding = now + debounce;
           state = moving_in;
-          Serial.println(F("STOP->IN"));
+          Serial.println(F("STOP->MOV_IN"));
 
       }
-      else if (!digitalRead(BLUE_SWITCH) && !sensorLimOut ){
+      else if (switchOut && !sensorLimOut ){
         holding = now + debounce;
         state = moving_out;
       }
@@ -124,12 +130,12 @@ void loop()     //fast Loop
     digitalWrite(LED_OUT, LOW); //
     digitalWrite(LED_IN, HIGH);
     if (sensorLimIn){
-      state = limit_in;
+      state = fully_closed;
     }
-    else if ((!digitalRead(RED_SWITCH) && (now > holding)) || !digitalRead(BLUE_SWITCH)){
+    else if (( switchIn && (now > holding)) || switchOut){
       holding = now + debounce2;
       state = stopped;
-      //Serial.println(F("IN->STOP")) ;
+      Serial.println(F("MOV_IN->STOP")) ;
     }
     break;
   case moving_out:
@@ -138,57 +144,41 @@ void loop()     //fast Loop
       digitalWrite(LED_OUT, HIGH);
       digitalWrite(LED_IN, LOW);
       if (sensorLimOut){
-      //Serial.println(F("Moving->limit_out"));
-        state = limit_out;
+      //Serial.println(F("Moving->fully_open"));
+        state = fully_open;
       }
     
-      if ((!digitalRead(BLUE_SWITCH) && (now > holding)) || !digitalRead(RED_SWITCH)){
+      if ((switchOut && (now > holding)) || switchIn){
         holding = now + debounce2;
         state = stopped;
         //Serial.println(F("OUT->STOP"));
       }
     break;    
-  case limit_in:
+  case fully_closed:
       digitalWrite(RELAY_IN, LOW);
       digitalWrite(RELAY_OUT, LOW);
-      // Blinking on loop2
-      //digitalWrite(LED_IN, HIGH);
-      //digitalWrite(LED_OUT, LOW); //
-      //digitalWrite(LED_IN, LOW);
-      if (!digitalRead(BLUE_SWITCH)) {
+      if (switchOut) {
         //holding = now + debounce2;
         state = moving_out;
       }
     break;
-  case limit_out:
+  case fully_open:
     digitalWrite(RELAY_IN, LOW);
     digitalWrite(RELAY_OUT, LOW);
     // Blinking on loop2
-    if (!digitalRead(RED_SWITCH)){
+    if (switchIn){
       //holding = now + debounce2;
       state = moving_in;
     }
     break;
   default:;
   }
-  //if (sensorLimIn || sensorLimOut){
-    //Serial.println(F("Moving->STOP"));
-    //state = stopped;
-  //}
-  
-  //  digitalWrite(RELAY_OUT, HIGH);
 
-
-  //digitalWrite(RELAY_IN, LOW);
-  //digitalWrite(RELAY_OUT, LOW);
-
-  // wait for a second
-  //delay(500);
   loop3();  // Slow print loop
   loop2();  // Slow blink loop
 }
 
-
+// Slow blink loop
 void loop2() {
 
   static unsigned long nextTime = 0;
@@ -202,11 +192,11 @@ void loop2() {
     led_state = !led_state;   
     switch (state)
     {
-      case limit_in:  
+      case fully_closed:  
           digitalWrite(LED_IN, led_state);
           digitalWrite(LED_OUT, LOW);
         break;          
-      case limit_out:  
+      case fully_open:  
           digitalWrite(LED_IN, LOW);
           digitalWrite(LED_OUT, led_state); 
       default:;
@@ -227,17 +217,21 @@ void loop3() {
     lastTime = now;
      //Serial.print(state);
     Serial.print(getStateName(state));
-    Serial.print(F(", Limit IN: "));
+    Serial.print(F(", SwIN: "));
+    Serial.print(switchIn, DEC);
+    Serial.print(F(", SwOUT: "));
+    Serial.print(switchOut, DEC);
+    Serial.print(F(", LimIN: "));
     Serial.print(sensorLimIn, DEC);
-    Serial.print(F(", Limit OUT: "));
+    Serial.print(F(", LimOUT: "));
     Serial.print(sensorLimOut, DEC);
     Serial.print(F(", Now "));
     Serial.print(now, DEC);
     Serial.print(F(", holding "));
-    Serial.print(holding, DEC);
+    Serial.println(holding, DEC);
    /* Then, later in main: */
   //printf("%s", getDayName(TheDay));
-   Serial.println(F(" end"));
+   //Serial.println(F(" end"));
      if (led_state ) {
          digitalWrite(LED_BUILTIN, LOW);
          led_state = 0;
