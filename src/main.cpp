@@ -1,6 +1,6 @@
 /**
  * @file main.c
- * @brief Arduino software to control MST12 Arm
+ * @brief Arduino software to control MST12 Arm 
  * @author Bernardo Carvalho / IPFN
  * @date 30/09/2021
  *
@@ -17,7 +17,7 @@
  * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  *
- * @details
+ * @details version Seeduino v4.2
  */
 
 
