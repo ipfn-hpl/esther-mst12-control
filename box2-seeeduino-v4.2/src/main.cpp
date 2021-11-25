@@ -194,10 +194,10 @@ void loop2() {
     {
       case fully_closed:  
           digitalWrite(LED_IN, led_state);
-          digitalWrite(LED_OUT, LOW);
+          digitalWrite(LED_OUT, LED_OFF);
         break;          
       case fully_open:  
-          digitalWrite(LED_IN, LOW);
+          digitalWrite(LED_IN, LED_OFF);
           digitalWrite(LED_OUT, led_state); 
       default:;
     }
