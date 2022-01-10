@@ -79,7 +79,8 @@
 
 bool sensorLimIn, sensorLimOut;
 bool switchIn, switchOut;
-unsigned long holding ;
+unsigned long holding, hold_stop;
+char in_char;
 
 void loop2();
 void loop3();
@@ -134,11 +135,15 @@ void setup()
 void loop()     //fast Loop
 {
 
-
   const long debounce = 1000; // 0.2 s
   const long debounce2 = 500; // 0.2 s
+  const long in_extend = 1000; 
 
-
+  in_char = 'x';
+  if (Serial.available()){
+    in_char = Serial.read();
+  }
+  
   sensorLimIn = digitalRead(LIMIT_IN);
   sensorLimOut = digitalRead(LIMIT_OUT);
   switchIn = !digitalRead(RED_SWITCH); // red
@@ -160,11 +165,10 @@ void loop()     //fast Loop
     else if (!sensorLimIn && sensorLimOut ) 
         state = fully_open;    
     else if (now > holding) {
-      if (switchIn && !sensorLimIn ){
-           holding = now + debounce;
+      if (((in_char =='i') || switchIn ) && !sensorLimIn ){
+          holding = now + debounce;
           state = moving_in;
           Serial.println(F("STOP->MOV_IN"));
-
       }
        else if (switchOut && !sensorLimOut ){
         holding = now + debounce;
@@ -181,6 +185,7 @@ void loop()     //fast Loop
       digitalWrite(LED_OUT, LED_OFF); //
       digitalWrite(LED_IN, LED_ON);
       if (sensorLimIn){
+        hold_stop = now + in_extend;
         state = fully_closed;
       }
       else if (( switchIn && (now > holding)) || switchOut){
@@ -214,11 +219,12 @@ void loop()     //fast Loop
     if (sensorLimIn && sensorLimOut ) 
         state = error;
     else {
-      digitalWrite(RELAY_IN, LOW);
-      digitalWrite(RELAY_OUT, LOW);
-      if (switchOut) {
-        //holding = now + debounce2;
+      if ((in_char =='o') || switchOut) {
         state = moving_out;
+      }
+      else if(now > hold_stop){
+        digitalWrite(RELAY_IN, LOW);
+        digitalWrite(RELAY_OUT, LOW);
       }
     }
     break;
@@ -295,6 +301,8 @@ void loop3() {
     lastTime = now;
      //Serial.print(state);
     Serial.print(getStateName(state));
+    Serial.print(F(", inchar: "));
+    Serial.print(in_char);
     Serial.print(F(", SwIN: "));
     Serial.print(switchIn, DEC);
     Serial.print(F(", SwOUT: "));

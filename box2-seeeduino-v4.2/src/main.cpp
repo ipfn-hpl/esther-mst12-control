@@ -28,20 +28,44 @@
  *    On limit ->Led OFF, -> black Wire 5V
  * 
  *
- *  RS232 Connector  (soldering side)  
+ *  RS232 Connector (Outer plug, Box side) (soldering side)  
  *     
- *        M+            LI     S-
- *         5    4   3    2     1
- *         |   |    |    |     |
- * 
- *           |    |    |    |
- *           9    8    7    6 
+ *        M-            LI     S-
+ *         1    2   3    4     5
+ *     -----------------------------
+ *      \  |   |    |    |    |   /
+ *       \                       /
+ *        \  |    |    |    |   /
+ *          -------------------
+ *           6    7    8    9 
  *          M+         LO     S+
- * M+: / M- motor connections
+ * 
+
+ *
+ * M-  Blue / motor connections
+ * M+: Brown
  * S+: Sensor VDD 5v 
  * S-: Sensor GND 0v 
- * SI: Limit sensor IN
- * SO: Limit sensor OUT
+ * LI: Limit sensor IN
+ * LO: Limit sensor OUT
+ * 
+ *********** Vacuum male-male connector is mirrored!!! ************
+ *  RS232 Connector (Inner plug, motor side) (soldering side)  
+ *     
+ *        S-  LO              M- (1)
+ *         1    2   3    4     5
+ *      -----------------------------
+ *       \  |   |    |    |     |  /
+ *        \   |    |    |    |    / 
+ *         \  6    7    8    9   /
+ *          -------------------
+ *          S+    LI       M+ (2)
+
+ * M- wire "1";  wire "2" / motor connections
+ * S+: Blue Wires Sensor VDD 5v 
+ * S-: Brown wires Sensor GND 0v 
+ * LI: Black wire Limit sensor IN
+ * LO: Black wire Limit sensor OUT
  * 
  */
 
