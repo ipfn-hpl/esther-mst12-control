@@ -83,7 +83,7 @@
 #define LED_IN 4   // e.g. Red LED
 #define RED_SWITCH 5 // PD5
 
-#define LIMIT_IN 7 // PD6
+#define LIMIT_IN 7 // White Grove connector PD6
 #define LIMIT_OUT  6  // Grove Yellow
 
 #define RELAY_IN SDA
