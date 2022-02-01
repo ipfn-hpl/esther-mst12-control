@@ -8,7 +8,7 @@
 
 /**
  * @file main.c
- * @brief Arduino software to control MST12 Arm 
+ * @brief Arduino software to control MST12 Arm
  * @author Bernardo Carvalho / IPFN
  * @date 30/09/2021
  *
@@ -27,29 +27,29 @@
  *
  * @details version ESP8266 WiFi d1_mini module
  * https://escapequotes.net/esp8266-wemos-d1-mini-pins-and-diagram/
- * 
- * Limit Sensor wires 
+ *
+ * Limit Sensor wires
  * Blue: positive 5V
  * Brown: GND
  * Black: Sensor
  * Sensor Normally LED on
  *    On limit ->Led OFF, ->black 5V
  *
- *  RS232 Connector  (soldering side)      
- *  
+ *  RS232 Connector  (soldering side)
+ *
  *         5    4   3    2     1
  *         |   |    |    |     |
- * 
+ *
  *           |    |    |    |
- *           9    8    7    6        
- *  
- * 
+ *           9    8    7    6
+ *
+ *
  */
 
 
 #include <Arduino.h>
 /*
-#define LED_WEMOOS_D1_MINI 2  LED_BUILTIN // Pin D4 GPIO2 
+#define LED_WEMOOS_D1_MINI 2  LED_BUILTIN // Pin D4 GPIO2
 #define LIMIT_OUT 12         // D5
 #define LIMIT_IN 14          // D6
 #define SWITCH_3_IN 5        // D1
@@ -74,8 +74,14 @@
 #define LIMIT_IN   14 // PD9
 
 
-#define RELAY_IN 2
-#define RELAY_OUT 0 // PB0
+//#define RELAY_IN 2
+//#define RELAY_OUT 0 // PB0
+
+#define RELAY_IN 0
+#define RELAY_OUT 2 // PB0
+
+#define RELAY_OFF HIGH
+#define RELAY_ON LOW
 
 bool sensorLimIn, sensorLimOut;
 bool switchIn, switchOut;
@@ -97,9 +103,9 @@ enum arm_state
 
 //#define LED_PIN 13
 
-const char* getStateName(enum arm_state state) 
-{                                                                                                                
-   switch (state) 
+const char* getStateName(enum arm_state state)
+{
+   switch (state)
    {
       case stopped: return    "Stopped";
       case moving_in: return  "Moving In";
@@ -121,7 +127,7 @@ void setup()
   pinMode(RELAY_IN, OUTPUT);
   pinMode(RELAY_OUT, OUTPUT);
 
-  pinMode(BLUE_SWITCH, INPUT_PULLUP); // 
+  pinMode(BLUE_SWITCH, INPUT_PULLUP); //
   pinMode(RED_SWITCH, INPUT_PULLUP);
 
   pinMode(LIMIT_OUT, INPUT_PULLUP);
@@ -137,13 +143,13 @@ void loop()     //fast Loop
 
   const long debounce = 1000; // 0.2 s
   const long debounce2 = 500; // 0.2 s
-  const long in_extend = 1000; 
+  const long in_extend = 1000;
 
   in_char = 'x';
   if (Serial.available()){
     in_char = Serial.read();
   }
-  
+
   sensorLimIn = digitalRead(LIMIT_IN);
   sensorLimOut = digitalRead(LIMIT_OUT);
   switchIn = !digitalRead(RED_SWITCH); // red
@@ -154,16 +160,16 @@ void loop()     //fast Loop
   switch (state)
   {
   case stopped:
-    digitalWrite(RELAY_IN, LOW);
-    digitalWrite(RELAY_OUT, LOW);
+    digitalWrite(RELAY_IN, RELAY_OFF);
+    digitalWrite(RELAY_OUT, RELAY_OFF);
     digitalWrite(LED_OUT, LED_OFF);
     digitalWrite(LED_IN, LED_OFF);
-    if (sensorLimIn && sensorLimOut ) 
+    if (sensorLimIn && sensorLimOut )
         state = error;
-    else if (sensorLimIn && !sensorLimOut ) 
-        state = fully_closed;    
-    else if (!sensorLimIn && sensorLimOut ) 
-        state = fully_open;    
+    else if (sensorLimIn && !sensorLimOut )
+        state = fully_closed;
+    else if (!sensorLimIn && sensorLimOut )
+        state = fully_open;
     else if (now > holding) {
       if (((in_char =='i') || switchIn ) && !sensorLimIn ){
           holding = now + debounce;
@@ -177,11 +183,11 @@ void loop()     //fast Loop
     }
     break;
   case moving_in:
-    if (sensorLimIn && sensorLimOut ) 
+    if (sensorLimIn && sensorLimOut )
         state = error;
     else {
-      digitalWrite(RELAY_IN, HIGH);
-      digitalWrite(RELAY_OUT, LOW);
+      digitalWrite(RELAY_IN, RELAY_ON);
+      digitalWrite(RELAY_OUT, RELAY_OFF);
       digitalWrite(LED_OUT, LED_OFF); //
       digitalWrite(LED_IN, LED_ON);
       if (sensorLimIn){
@@ -196,44 +202,44 @@ void loop()     //fast Loop
     }
     break;
   case moving_out:
-    if (sensorLimIn && sensorLimOut ) 
+    if (sensorLimIn && sensorLimOut )
         state = error;
     else {
-      digitalWrite(RELAY_OUT, HIGH);
-      digitalWrite(RELAY_IN, LOW);
+      digitalWrite(RELAY_IN, RELAY_OFF);
+      digitalWrite(RELAY_OUT, RELAY_ON);
       digitalWrite(LED_OUT, LED_ON);
       digitalWrite(LED_IN, LED_OFF);
       if (sensorLimOut){
       //Serial.println(F("Moving->fully_open"));
         state = fully_open;
       }
-    
+
       if ((switchOut && (now > holding)) || switchIn){
         holding = now + debounce2;
         state = stopped;
         //Serial.println(F("OUT->STOP"));
       }
     }
-    break;    
+    break;
   case fully_closed:
-    if (sensorLimIn && sensorLimOut ) 
+    if (sensorLimIn && sensorLimOut )
         state = error;
     else {
       if ((in_char =='o') || switchOut) {
         state = moving_out;
       }
       else if(now > hold_stop){
-        digitalWrite(RELAY_IN, LOW);
-        digitalWrite(RELAY_OUT, LOW);
+        digitalWrite(RELAY_IN, RELAY_OFF);
+        digitalWrite(RELAY_OUT, RELAY_OFF);
       }
     }
     break;
   case fully_open:
-    if (sensorLimIn && sensorLimOut ) 
+    if (sensorLimIn && sensorLimOut )
         state = error;
     else {
-      digitalWrite(RELAY_IN, LOW);
-      digitalWrite(RELAY_OUT, LOW);
+      digitalWrite(RELAY_IN, RELAY_OFF);
+      digitalWrite(RELAY_OUT, RELAY_OFF);
       // Blinking on loop2
       if (switchIn) {
         //holding = now + debounce2;
@@ -242,15 +248,15 @@ void loop()     //fast Loop
     }
     break;
   case error:
-      digitalWrite(RELAY_IN, LOW);
-      digitalWrite(RELAY_OUT, LOW);
-      if (sensorLimIn && !sensorLimOut ) 
-        state = fully_closed;         
-      else if ( !sensorLimIn && sensorLimOut ) 
-        state = fully_open;      
-      else if ( !sensorLimIn && !sensorLimOut ) 
-        state = stopped;      
-    break;    
+      digitalWrite(RELAY_IN, RELAY_OFF);
+      digitalWrite(RELAY_OUT, RELAY_OFF);
+      if (sensorLimIn && !sensorLimOut )
+        state = fully_closed;
+      else if ( !sensorLimIn && sensorLimOut )
+        state = fully_open;
+      else if ( !sensorLimIn && !sensorLimOut )
+        state = stopped;
+    break;
   default:;
   }
 
@@ -267,22 +273,22 @@ void loop2() {
 
   unsigned long now = millis();
 
-  if ( now > nextTime ) {  
-    nextTime = now + interval; 
-    led_state = !led_state;   
+  if ( now > nextTime ) {
+    nextTime = now + interval;
+    led_state = !led_state;
     switch (state)
     {
-      case fully_closed:  
+      case fully_closed:
           digitalWrite(LED_IN, led_state);
           digitalWrite(LED_OUT, LED_OFF);
-        break;          
-      case fully_open:  
+        break;
+      case fully_open:
           digitalWrite(LED_IN, LED_OFF);
-          digitalWrite(LED_OUT, led_state); 
-        break;          
-      case error:  
+          digitalWrite(LED_OUT, led_state);
+        break;
+      case error:
           digitalWrite(LED_IN, led_state);
-          digitalWrite(LED_OUT, led_state); 
+          digitalWrite(LED_OUT, led_state);
       default:;
     }
   }
