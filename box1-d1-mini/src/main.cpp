@@ -136,6 +136,7 @@ void setup()
   state = stopped;
   // Start serial port
   Serial.begin(115200);
+  in_char = 'x';
 }
 
 void loop()     //fast Loop
@@ -145,7 +146,14 @@ void loop()     //fast Loop
   const long debounce2 = 500; // 0.2 s
   const long in_extend = 1000;
 
-  in_char = 'x';
+  //in_char = 'x';
+  if ((in_char == 'x') ){
+     while (Serial.available() > 0) {
+    // read the incoming byte:
+         in_char = Serial.read();
+     }
+  }
+
   if (Serial.available()){
     in_char = Serial.read();
   }
@@ -175,9 +183,11 @@ void loop()     //fast Loop
           holding = now + debounce;
           state = moving_in;
           Serial.println(F("STOP->MOV_IN"));
+          in_char = 'x';
       }
-       else if (switchOut && !sensorLimOut ){
+       else if (((in_char =='o') || switchOut) && !sensorLimOut){
         holding = now + debounce;
+        in_char = 'x';
         state = moving_out;
       }
     }
@@ -307,7 +317,7 @@ void loop3() {
     lastTime = now;
      //Serial.print(state);
     Serial.print(getStateName(state));
-    Serial.print(F(", inchar: "));
+    Serial.print(F(", char: "));
     Serial.print(in_char);
     Serial.print(F(", SwIN: "));
     Serial.print(switchIn, DEC);
@@ -317,9 +327,9 @@ void loop3() {
     Serial.print(sensorLimIn, DEC);
     Serial.print(F(", LimOUT: "));
     Serial.print(sensorLimOut, DEC);
-    Serial.print(F(", Now "));
+    Serial.print(F(", Now: "));
     Serial.print(now, DEC);
-    Serial.print(F(", holding "));
+    Serial.print(F(", Holding: "));
     Serial.println(holding, DEC);
    /* Then, later in main: */
   //printf("%s", getDayName(TheDay));
