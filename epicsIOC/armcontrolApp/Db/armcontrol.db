@@ -1,0 +1,77 @@
+#######################################################
+## vim: sta:et:sw=4:ts=4:sts=4
+# ###                                             ### #
+# ### EPICS Database for                          ### #
+# ### MST-12 Arduino control                      ### #
+# ###                                             ### #
+# ### author: B. Carvalho                         ### #
+# ###                                             ### #
+# ### Ref 1.0; 2022                               ### #
+# ###                                             ### #
+# ### macros: BUS     RS232/RS485 BUS name		  ### #
+# ###                                             ### #
+# ### Description:                                ### #
+# ### This is an example DB file using            ### #
+# ### stream(asynI2C) and devgpio to readout an   ### #
+# ###                                             ### #
+# ### Records ending in "__" are for internal use ### #
+# ### only! Do not set them manually              ### #
+# ###                                             ### #
+#######################################################
+# 1, Stopped, Char: x, SwIN: 0, SwOUT: 0, LimIN: 0, LimOUT: 0, Now: 686343, Holding: 0
+
+record(longin, $(P)$(R)01:StartCnt){
+    field(DESC, "Start counter")
+    field(VAL, "-1")
+    field(EGU, "min")
+}
+record(bi, $(P)$(R)SwitchIn){
+    field(DESC, "Start counter")
+    field(DTYP, "stream")
+    field(INP, "@armcontrol.proto SwitchIn $(BUS)")
+    field(VAL, "1")
+#    field(SCAN, "I/O Intr")
+#    field(EGU, "min")
+}
+record(bi, $(P)$(R)SwitchOut){
+    field(DESC, "Start counter")
+    field(DTYP, "stream")
+    field(INP, "@armcontrol.proto SwitchIn $(BUS)")
+    field(VAL, "1")
+#    field(SCAN, "I/O Intr")
+#    field(EGU, "min")
+}
+record(longin, $(P)$(R)Status){
+    field(DTYP, "stream")
+    field(INP, "@armcontrol.proto Status RS232B1")
+    field(VAL, "-1")
+    field(SCAN, "I/O Intr")
+}
+record(longin, $(P)$(R)Millis){
+    field(DESC, "Start counter")
+    field(DTYP, "stream")
+    # field(INP, "@edwards.proto Millis('01', $(P)$(R)01:PumpSerialNo, $(P)$(R)01:PumpCnt, $(P)$(R)01:CuCnt, $(P)$(R)01:StartCnt) RS485")
+    field(INP, "@armcontrol.proto Millis RS232B1")
+    field(VAL, "-1")
+    field(EGU, "ms")
+    field(SCAN, "I/O Intr")
+}
+record(stringin, $(P)$(R)Char){
+    field(DTYP, "stream")
+    field(INP, "@armcontrol.proto Millis RS232B1")
+    field(SCAN, "I/O Intr")
+}
+record(stringin, $(P)$(R)01:ReadCounters){
+    field(DESC, "CU/Pump serialN, hour cnt, start cnt")
+    field(PINI, "YES")
+    field(VAL, "Void")
+#    field(SCAN, "2 second")
+#    field(DISA, "1")
+#    field(FLNK, "$(P)$(R)02:ReadCounters")
+}
+record(stringout, $(P)$(R):generic){
+    field(DESC, "Generic")
+    field(DTYP, "stream")
+    field(OUT, "@armcontrol.proto debug('01') RS232B1")
+#    field(PINI, "YES")
+}

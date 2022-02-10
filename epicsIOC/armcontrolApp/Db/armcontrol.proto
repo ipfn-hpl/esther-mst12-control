@@ -1,0 +1,31 @@
+Terminator   = CR LF;
+#ReplyTimeout = 200;
+ReadTimeout  = 200;
+WriteTimeout = 100;
+MaxInput     = 100;
+#ExtraInput   = Error;
+ExtraInput   = Ignore;
+
+Millis {
+    in "1, Closed, Char: x, SwIN: 0, SwOUT: 0, LimIN: 1, LimOUT: 0, Now: %d,%*20c";
+}
+Box {
+    in "%d, Closed, Char: x, SwIN: %*d, SwOUT: 0, LimIN: 1, LimOUT: 0, Now: %*d,%*20c";
+}
+SwitchIn {
+    in "1, Closed, Char: x, SwIN: %d, SwOUT: 0, LimIN: 1, LimOUT: 0, Now: %*d,%*20c";
+}
+
+Status {
+    in "1, %{Stopped|MovinIn|MovinOut|Closed}, Char: x, SwIN: %*d, SwOUT: 0, LimIN: 1, LimOUT: 0, Now: %*d,%*20c";
+}
+
+Char {
+    in "1, Closed, Char: %c, SwIN: %*d, SwOUT: %*d, LimIN: 1, LimOUT: 0, Now: %*d,%*20c";
+}
+
+debug {
+    ExtraInput = Ignore;
+    out "%s"; in "%60c"
+}
+

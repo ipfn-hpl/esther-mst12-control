@@ -108,8 +108,8 @@ const char* getStateName(enum arm_state state)
    switch (state)
    {
       case stopped: return    "Stopped";
-      case moving_in: return  "Moving In";
-      case moving_out: return "Moving Out";
+      case moving_in: return  "MovingIn";
+      case moving_out: return "MovingOut";
       case fully_closed: return "Closed";
       case fully_open: return  "Open";
       case error: return  "Error";
@@ -149,7 +149,7 @@ void loop()     //fast Loop
   //in_char = 'x';
   if ((in_char == 'x') ){
      while (Serial.available() > 0) {
-    // read the incoming byte:
+    // read incoming bytes, store last:
          in_char = Serial.read();
      }
   }
@@ -160,8 +160,10 @@ void loop()     //fast Loop
 
   sensorLimIn = digitalRead(LIMIT_IN);
   sensorLimOut = digitalRead(LIMIT_OUT);
-  switchIn = !digitalRead(RED_SWITCH); // red
-  switchOut = !digitalRead(BLUE_SWITCH);  // blue
+  switchIn = !digitalRead(RED_SWITCH) || (in_char=='i') || (in_char=='I'); // red
+  switchOut = !digitalRead(BLUE_SWITCH) || (in_char=='o') || (in_char=='O');  // blue
+  //switchIn = !digitalRead(RED_SWITCH); // red
+  //switchOut = !digitalRead(BLUE_SWITCH);  // blue
 
   unsigned long now = millis();
 
@@ -179,13 +181,13 @@ void loop()     //fast Loop
     else if (!sensorLimIn && sensorLimOut )
         state = fully_open;
     else if (now > holding) {
-      if (((in_char =='i') || switchIn ) && !sensorLimIn ){
+      if ( switchIn  && !sensorLimIn ){
           holding = now + debounce;
           state = moving_in;
           Serial.println(F("STOP->MOV_IN"));
           in_char = 'x';
       }
-       else if (((in_char =='o') || switchOut) && !sensorLimOut){
+       else if (switchOut && !sensorLimOut){
         holding = now + debounce;
         in_char = 'x';
         state = moving_out;
@@ -208,6 +210,7 @@ void loop()     //fast Loop
         holding = now + debounce2;
         state = stopped;
         Serial.println(F("MOV_IN->STOP")) ;
+        in_char = 'x';
       }
     }
     break;
@@ -227,6 +230,7 @@ void loop()     //fast Loop
       if ((switchOut && (now > holding)) || switchIn){
         holding = now + debounce2;
         state = stopped;
+        in_char = 'x';
         //Serial.println(F("OUT->STOP"));
       }
     }
@@ -235,8 +239,9 @@ void loop()     //fast Loop
     if (sensorLimIn && sensorLimOut )
         state = error;
     else {
-      if ((in_char =='o') || switchOut) {
+      if (switchOut) {
         state = moving_out;
+        in_char = 'x';
       }
       else if(now > hold_stop){
         digitalWrite(RELAY_IN, RELAY_OFF);
@@ -254,6 +259,7 @@ void loop()     //fast Loop
       if (switchIn) {
         //holding = now + debounce2;
         state = moving_in;
+        in_char = 'x';
       }
     }
     break;
@@ -316,8 +322,9 @@ void loop3() {
     //state = 1;
     lastTime = now;
      //Serial.print(state);
+    Serial.print(F("1, "));
     Serial.print(getStateName(state));
-    Serial.print(F(", char: "));
+    Serial.print(F(", Char: "));
     Serial.print(in_char);
     Serial.print(F(", SwIN: "));
     Serial.print(switchIn, DEC);
