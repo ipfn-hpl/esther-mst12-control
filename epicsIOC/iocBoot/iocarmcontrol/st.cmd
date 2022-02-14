@@ -1,4 +1,4 @@
-#!../../bin/linux-x86_64/armcontrol
+#!../../bin/darwin-x86/armcontrol
 
 #- You may have to change armcontrol to something else
 #- everywhere it appears in this file
@@ -16,21 +16,24 @@ armcontrol_registerRecordDeviceDriver pdbbase
 ## Load record instances
 #dbLoadRecords("db/xxx.db","user=bernardo")
 
-drvAsynSerialPortConfigure("RS232B1","/dev/armCTST")
+drvAsynSerialPortConfigure("RS232B1","/dev/cu.usbmodem14201", 0, 0)
+#drvAsynSerialPortConfigure("RS232B1","/dev/SLAB_USBtoUART", 0, 0)
+# For virtual serial port do
+# socat -d -d -v pty,rawer,link=Vport EXEC:./echo.sh,pty,rawer
+#drvAsynSerialPortConfigure("RS232B1","/dev/ttys001")
 asynSetOption("RS232B1", 0, "baud", "115200")
 asynSetOption("RS232B1", 0, "bits", "8")
 asynSetOption("RS232B1", 0, "parity", "none")
 asynSetOption("RS232B1", 0, "stop", "1")
-##asynSetOption("RS232B1", 0, "clocal", "Y")
-#asynSetOption("RS485", 0, "crtscts", "N")
+# ESP32 boards reboots on serial connect
+#asynSetOption("RS232B1", 0, "clocal", "N")
+asynSetOption("RS232B1", 0, "crtscts", "Y")
 
-dbLoadRecords("db/armcontrol.db", "P=UUU:,R=ARM:,BUS=RS232B1")
+dbLoadRecords("db/armcontrol.db", "P=UUU:,R=ARM:,A=1,BUS=RS232B1")
 
 var streamError 1
 # var streamDebug 1
 #streamSetLogfile("stream_logfile.txt")
-
-
 
 cd "${TOP}/iocBoot/${IOC}"
 iocInit

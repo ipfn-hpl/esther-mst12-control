@@ -1,27 +1,46 @@
-Terminator   = CR LF;
-#ReplyTimeout = 200;
-ReadTimeout  = 200;
-WriteTimeout = 100;
+Terminator = CR LF;
+#Terminator = LF;
+#LockTimeout = 5000;
+ReplyTimeout = 2000;
+#ReadTimeout  = 200;
+#WriteTimeout = 100;
 MaxInput     = 100;
 #ExtraInput   = Error;
-ExtraInput   = Ignore;
+#ExtraInput   = Ignore;
 
+#1, Stopped, Char:x, SwIN:0, SwOUT:0, LimIN:0, LimOUT:0, Millis:686343, Holding:0
 Millis {
-    in "1, Closed, Char: x, SwIN: 0, SwOUT: 0, LimIN: 1, LimOUT: 0, Now: %d,%*20c";
+    in "\$1, %*{Stopped|MovinIn|MovinOut|Closed|Open|Error}, Char:%*c, SwIN:%*b, SwOUT:%*b, LimIN:%*b, LimOUT:%b, Now:%d, Holding:%*d";
 }
 Box {
     in "%d, Closed, Char: x, SwIN: %*d, SwOUT: 0, LimIN: 1, LimOUT: 0, Now: %*d,%*20c";
 }
 SwitchIn {
-    in "1, Closed, Char: x, SwIN: %d, SwOUT: 0, LimIN: 1, LimOUT: 0, Now: %*d,%*20c";
+    in "\$1, %*{Stopped|MovinIn|MovinOut|Closed|Open|Error}, Char:%*c, SwIN:%b, SwOUT:%*b, LimIN:%*b, LimOUT:%*b, Now:%*d, Holding:%*d";
+}
+SwitchInCmd {
+    out "O"
+}
+
+SwitchOut {
+    in "\$1, %*{Stopped|MovinIn|MovinOut|Closed|Open|Error}, Char:%*c, SwIN:%*b, SwOUT:%b, LimIN:%*b, LimOUT:%*b, Now:%*d, Holding:%*d";
+}
+
+LimitIn {
+    in "\$1, %*{Stopped|MovinIn|MovinOut|Closed|Open|Error}, Char:%*c, SwIN:%*b, SwOUT:%*b, LimIN:%b, LimOUT:%*b, Now:%*d, Holding:%*d";
+}
+
+LimitOut {
+    in "\$1, %*{Stopped|MovinIn|MovinOut|Closed|Open|Error}, Char:%*c, SwIN:%*b, SwOUT:%*b, LimIN:%*b, LimOUT:%b, Now:%*d, Holding:%*d";
 }
 
 Status {
-    in "1, %{Stopped|MovinIn|MovinOut|Closed}, Char: x, SwIN: %*d, SwOUT: 0, LimIN: 1, LimOUT: 0, Now: %*d,%*20c";
+    in "\$1, %{Stopped|MovinIn|MovinOut|Closed|Open|Error}, Char:%*c, SwIN:%*b, SwOUT:%*b, LimIN:%*b, LimOUT:%*b, Now:%*d, Holding:%*d";
 }
 
+    #in "\$1, %*{Stopped|MovinIn|MovinOut|Closed|Open|Error}, Char:%c, SwIN:%*b, SwOUT:%*b, LimIN:%*b, LimOUT:%*b, Now:%*d, Holding:%*d";
 Char {
-    in "1, Closed, Char: %c, SwIN: %*d, SwOUT: %*d, LimIN: 1, LimOUT: 0, Now: %*d,%*20c";
+    in "\$1, %*{Stopped|MovinIn|MovinOut|Closed|Open|Error}, Char:%1[xIioO], SwIN:%*b, SwOUT:%*b, LimIN:%*b, LimOUT:%*b, Now:%*d, Holding:%*d";
 }
 
 debug {

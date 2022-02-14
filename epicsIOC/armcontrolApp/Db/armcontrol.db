@@ -20,58 +20,92 @@
 #######################################################
 # 1, Stopped, Char: x, SwIN: 0, SwOUT: 0, LimIN: 0, LimOUT: 0, Now: 686343, Holding: 0
 
-record(longin, $(P)$(R)01:StartCnt){
-    field(DESC, "Start counter")
-    field(VAL, "-1")
-    field(EGU, "min")
-}
-record(bi, $(P)$(R)SwitchIn){
-    field(DESC, "Start counter")
-    field(DTYP, "stream")
-    field(INP, "@armcontrol.proto SwitchIn $(BUS)")
-    field(VAL, "1")
-#    field(SCAN, "I/O Intr")
+#record(longin, $(P)$(R)01:StartCnt){
+#    field(DESC, "Start counter")
+#    field(VAL, "-1")
 #    field(EGU, "min")
-}
-record(bi, $(P)$(R)SwitchOut){
-    field(DESC, "Start counter")
+#}
+record(bi, $(P)$(R)$(A):SwitchIn){
+    field(DESC, "SwitchIn Status")
     field(DTYP, "stream")
-    field(INP, "@armcontrol.proto SwitchIn $(BUS)")
+    field(INP, "@armcontrol.proto SwitchIn($(A)) $(BUS)")
+    field(ZNAM, "OFF")
+    field(ONAM, "ON")
     field(VAL, "1")
-#    field(SCAN, "I/O Intr")
-#    field(EGU, "min")
-}
-record(longin, $(P)$(R)Status){
-    field(DTYP, "stream")
-    field(INP, "@armcontrol.proto Status RS232B1")
-    field(VAL, "-1")
     field(SCAN, "I/O Intr")
 }
-record(longin, $(P)$(R)Millis){
+    #field( ONAM, "Pulse")
+record(bo, $(P)$(R)$(A):SwitchInCmd){
+    field(DESC, "SwIn Command")
+    field(DTYP, "stream")
+    field(OUT, "@armcontrol.proto SwitchInCmd $(BUS)")
+    field(ZNAM, "Off")
+    field(ONAM, "Pulse")
+    field(HIGH, "2.0")
+    field(VAL, "0")
+}
+record(bi, $(P)$(R)$(A):SwitchOut){
     field(DESC, "Start counter")
     field(DTYP, "stream")
-    # field(INP, "@edwards.proto Millis('01', $(P)$(R)01:PumpSerialNo, $(P)$(R)01:PumpCnt, $(P)$(R)01:CuCnt, $(P)$(R)01:StartCnt) RS485")
-    field(INP, "@armcontrol.proto Millis RS232B1")
+    field(INP, "@armcontrol.proto SwitchOut($(A)) $(BUS)")
+    field(ZNAM, "OFF")
+    field(ONAM, "ON")
+    field(VAL, "1")
+    field(SCAN, "I/O Intr")
+}
+record(bi, $(P)$(R)$(A):LimitIn){
+    field(DESC, "Start counter")
+    field(DTYP, "stream")
+    field(INP, "@armcontrol.proto LimitIn($(A)) $(BUS)")
+    field(ZNAM, "OFF")
+    field(ONAM, "ON")
+    field(VAL, "1")
+    field(SCAN, "I/O Intr")
+}
+record(bi, $(P)$(R)$(A):LimitOut){
+    field(DESC, "Start counter")
+    field(DTYP, "stream")
+    field(INP, "@armcontrol.proto LimitOut($(A)) $(BUS)")
+    field(ZNAM, "OFF")
+    field(ONAM, "ON")
+    field(VAL, "1")
+    field(SCAN, "I/O Intr")
+}
+record(mbbi, $(P)$(R)$(A):Status){
+    field(DTYP, "stream")
+    field(INP, "@armcontrol.proto Status($(A)) $(BUS)")
+    field(VAL, "5")
+
+    field(ZRVL,"0")
+    field(ZRST,"Stopped")
+    field(ONVL,"1")
+    field(ONST,"MovingIn")
+    field(TWVL,"2")
+    field(TWST,"MovingOut")
+    field(THVL,"3")
+    field(THST,"Closed")
+    field(FRVL,"4")
+    field(FRST,"Open")
+    field(FVVL,"5")
+    field(FVST,"Error")
+
+    field(SCAN, "I/O Intr")
+}
+record(longin, $(P)$(R)$(A):Millis){
+    field(DESC, "Start counter")
+    field(DTYP, "stream")
+    field(INP, "@armcontrol.proto Millis($(A)) RS232B1")
     field(VAL, "-1")
     field(EGU, "ms")
     field(SCAN, "I/O Intr")
 }
-record(stringin, $(P)$(R)Char){
+record(stringin, $(P)$(R)$(A):Char){
     field(DTYP, "stream")
-    field(INP, "@armcontrol.proto Millis RS232B1")
+    field(INP, "@armcontrol.proto Char($(A)) $(BUS)")
     field(SCAN, "I/O Intr")
-}
-record(stringin, $(P)$(R)01:ReadCounters){
-    field(DESC, "CU/Pump serialN, hour cnt, start cnt")
-    field(PINI, "YES")
-    field(VAL, "Void")
-#    field(SCAN, "2 second")
-#    field(DISA, "1")
-#    field(FLNK, "$(P)$(R)02:ReadCounters")
 }
 record(stringout, $(P)$(R):generic){
     field(DESC, "Generic")
     field(DTYP, "stream")
     field(OUT, "@armcontrol.proto debug('01') RS232B1")
-#    field(PINI, "YES")
 }
