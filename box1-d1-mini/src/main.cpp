@@ -82,6 +82,7 @@
 
 #define RELAY_OFF HIGH
 #define RELAY_ON LOW
+/** End esp8266 d1_specific **/
 
 bool sensorLimIn, sensorLimOut;
 bool switchIn, switchOut;
@@ -324,19 +325,19 @@ void loop3() {
      //Serial.print(state);
     Serial.print(F("1, "));
     Serial.print(getStateName(state));
-    Serial.print(F(", Char: "));
+    Serial.print(F(", Char:"));
     Serial.print(in_char);
-    Serial.print(F(", SwIN: "));
+    Serial.print(F(", SwIN:"));
     Serial.print(switchIn, DEC);
-    Serial.print(F(", SwOUT: "));
+    Serial.print(F(", SwOUT:"));
     Serial.print(switchOut, DEC);
-    Serial.print(F(", LimIN: "));
+    Serial.print(F(", LimIN:"));
     Serial.print(sensorLimIn, DEC);
-    Serial.print(F(", LimOUT: "));
+    Serial.print(F(", LimOUT:"));
     Serial.print(sensorLimOut, DEC);
-    Serial.print(F(", Now: "));
+    Serial.print(F(", Millis:"));
     Serial.print(now, DEC);
-    Serial.print(F(", Holding: "));
+    Serial.print(F(", Holding:"));
     Serial.println(holding, DEC);
    /* Then, later in main: */
   //printf("%s", getDayName(TheDay));

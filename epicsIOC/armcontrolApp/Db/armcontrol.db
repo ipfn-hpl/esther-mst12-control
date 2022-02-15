@@ -8,7 +8,7 @@
 # ###                                             ### #
 # ### Ref 1.0; 2022                               ### #
 # ###                                             ### #
-# ### macros: BUS     RS232/RS485 BUS name		  ### #
+# ### macros: BUS     RS232 BUS     name		  ### #
 # ###                                             ### #
 # ### Description:                                ### #
 # ### This is an example DB file using            ### #
@@ -18,7 +18,8 @@
 # ### only! Do not set them manually              ### #
 # ###                                             ### #
 #######################################################
-# 1, Stopped, Char: x, SwIN: 0, SwOUT: 0, LimIN: 0, LimOUT: 0, Now: 686343, Holding: 0
+#
+#      "1, Closed, Char:x, SwIN:0, SwOUT:0, LimIN:1, LimOUT:0, Millis:1210605, Holding:1147167"
 
 #record(longin, $(P)$(R)01:StartCnt){
 #    field(DESC, "Start counter")
@@ -34,7 +35,6 @@ record(bi, $(P)$(R)$(A):SwitchIn){
     field(VAL, "1")
     field(SCAN, "I/O Intr")
 }
-    #field( ONAM, "Pulse")
 record(bo, $(P)$(R)$(A):SwitchInCmd){
     field(DESC, "SwIn Command")
     field(DTYP, "stream")
@@ -52,6 +52,15 @@ record(bi, $(P)$(R)$(A):SwitchOut){
     field(ONAM, "ON")
     field(VAL, "1")
     field(SCAN, "I/O Intr")
+}
+record(bo, $(P)$(R)$(A):SwitchOutCmd){
+    field(DESC, "SwOut Command")
+    field(DTYP, "stream")
+    field(OUT, "@armcontrol.proto SwitchOutCmd $(BUS)")
+    field(ZNAM, "Off")
+    field(ONAM, "Pulse")
+    field(HIGH, "2.0")
+    field(VAL, "0")
 }
 record(bi, $(P)$(R)$(A):LimitIn){
     field(DESC, "Start counter")
@@ -94,7 +103,15 @@ record(mbbi, $(P)$(R)$(A):Status){
 record(longin, $(P)$(R)$(A):Millis){
     field(DESC, "Start counter")
     field(DTYP, "stream")
-    field(INP, "@armcontrol.proto Millis($(A)) RS232B1")
+    field(INP, "@armcontrol.proto Millis($(A)) $(BUS)")
+    field(VAL, "-1")
+    field(EGU, "ms")
+    field(SCAN, "I/O Intr")
+}
+record(longin, $(P)$(R)$(A):Holding){
+    field(DESC, "Start counter")
+    field(DTYP, "stream")
+    field(INP, "@armcontrol.proto Millis($(A)) $(BUS)")
     field(VAL, "-1")
     field(EGU, "ms")
     field(SCAN, "I/O Intr")
@@ -107,5 +124,5 @@ record(stringin, $(P)$(R)$(A):Char){
 record(stringout, $(P)$(R):generic){
     field(DESC, "Generic")
     field(DTYP, "stream")
-    field(OUT, "@armcontrol.proto debug('01') RS232B1")
+    field(OUT, "@armcontrol.proto debug $(BUS)")
 }
