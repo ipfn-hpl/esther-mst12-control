@@ -13,20 +13,20 @@ MaxInput     = 100;
 
 #1, Stopped, Char:x, SwIN:0, SwOUT:0, LimIN:0, LimOUT:0, Millis:686343, Holding:0
 Millis {
-    in "\$1, %*{Stopped|MovinIn|MovinOut|Closed|Open|Error}, Char:%*c, SwIN:%*b, SwOUT:%*b, LimIN:%*b, LimOUT:%*b, Millis:%d, Holding:%*d";
+    in "\$1, %*{Stopped|MovingIn|MovingOut|Closed|Open|Error}, Char:%*c, SwIN:%*b, SwOUT:%*b, LimIN:%*b, LimOUT:%*b, Millis:%d, Holding:%*d";
 }
 Box {
     in "%d, Closed, Char: x, SwIN: %*d, SwOUT: 0, LimIN: 1, LimOUT: 0, Millis: %*d,%*20c";
 }
 SwitchIn {
-    in "\$1, %*{Stopped|MovinIn|MovinOut|Closed|Open|Error}, Char:%*c, SwIN:%b, SwOUT:%*b, LimIN:%*b, LimOUT:%*b, Millis:%*d, Holding:%*d";
+    in "\$1, %*{Stopped|MovingIn|MovingOut|Closed|Open|Error}, Char:%*c, SwIN:%b, SwOUT:%*b, LimIN:%*b, LimOUT:%*b, Millis:%*d, Holding:%*d";
 }
 SwitchInCmd {
     out "%{x|i|I}"
 }
 
 SwitchOut {
-    in "\$1, %*{Stopped|MovinIn|MovinOut|Closed|Open|Error}, Char:%*c, SwIN:%*b, SwOUT:%b, LimIN:%*b, LimOUT:%*b, Millis:%*d, Holding:%*d";
+    in "\$1, %*{Stopped|MovingIn|MovingOut|Closed|Open|Error}, Char:%*c, SwIN:%*b, SwOUT:%b, LimIN:%*b, LimOUT:%*b, Millis:%*d, Holding:%*d";
 }
 
 SwitchOutCmd {
@@ -34,24 +34,24 @@ SwitchOutCmd {
 }
 
 LimitIn {
-    in "\$1, %*{Stopped|MovinIn|MovinOut|Closed|Open|Error}, Char:%*c, SwIN:%*b, SwOUT:%*b, LimIN:%b, LimOUT:%*b, Millis:%*d, Holding:%*d";
+    in "\$1, %*{Stopped|MovingIn|MovingOut|Closed|Open|Error}, Char:%*c, SwIN:%*b, SwOUT:%*b, LimIN:%b, LimOUT:%*b, Millis:%*d, Holding:%*d";
 }
 
 LimitOut {
-    in "\$1, %*{Stopped|MovinIn|MovinOut|Closed|Open|Error}, Char:%*c, SwIN:%*b, SwOUT:%*b, LimIN:%*b, LimOUT:%b, Millis:%*d, Holding:%*d";
+    in "\$1, %*{Stopped|MovingIn|MovingOut|Closed|Open|Error}, Char:%*c, SwIN:%*b, SwOUT:%*b, LimIN:%*b, LimOUT:%b, Millis:%*d, Holding:%*d";
 }
 
 Status {
-    in "\$1, %{Stopped|MovinIn|MovinOut|Closed|Open|Error}, Char:%*c, SwIN:%*b, SwOUT:%*b, LimIN:%*b, LimOUT:%*b, Millis:%*d, Holding:%*d";
+    in "\$1, %{Stopped|MovingIn|MovingOut|Closed|Open|Error}, Char:%*c, SwIN:%*b, SwOUT:%*b, LimIN:%*b, LimOUT:%*b, Millis:%*d, Holding:%*d";
 }
 
-    #in "\$1, %*{Stopped|MovinIn|MovinOut|Closed|Open|Error}, Char:%c, SwIN:%*b, SwOUT:%*b, LimIN:%*b, LimOUT:%*b, Millis:%*d, Holding:%*d";
+    #in "\$1, %*{Stopped|MovingIn|MovingOut|Closed|Open|Error}, Char:%c, SwIN:%*b, SwOUT:%*b, LimIN:%*b, LimOUT:%*b, Millis:%*d, Holding:%*d";
 Char {
-    in "\$1, %*{Stopped|MovinIn|MovinOut|Closed|Open|Error}, Char:%1[xIioO], SwIN:%*b, SwOUT:%*b, LimIN:%*b, LimOUT:%*b, Millis:%*d, Holding:%*d";
+    in "\$1, %*{Stopped|MovingIn|MovingOut|Closed|Open|Error}, Char:%1[xIioO], SwIN:%*b, SwOUT:%*b, LimIN:%*b, LimOUT:%*b, Millis:%*d, Holding:%*d";
 }
 
 Holding {
-    in "\$1, %*{Stopped|MovinIn|MovinOut|Closed|Open|Error}, Char:%*c, SwIN:%*b, SwOUT:%*b, LimIN:%*b, LimOUT:%*b, Millis:%*d, Holding:%d";
+    in "\$1, %*{Stopped|MovingIn|MovingOut|Closed|Open|Error}, Char:%*c, SwIN:%*b, SwOUT:%*b, LimIN:%*b, LimOUT:%*b, Millis:%*d, Holding:%d";
 }
 debug {
     ExtraInput = Ignore;

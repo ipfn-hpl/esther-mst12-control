@@ -24,7 +24,7 @@ armcontrol_registerRecordDeviceDriver pdbbase
 # socat -d -d -v pty,rawer,link=Vport EXEC:./echo.sh,pty,rawer
 #drvAsynSerialPortConfigure("RS232B1","/dev/ttys001")
 
-drvAsynSerialPortConfigure("RS232B1","/dev/armCTST")
+drvAsynSerialPortConfigure("RS232B1","/dev/armSTDT")
 asynSetOption("RS232B1", 0, "baud", "115200")
 asynSetOption("RS232B1", 0, "bits", "8")
 asynSetOption("RS232B1", 0, "parity", "none")
