@@ -46,7 +46,6 @@
  *
  */
 
-
 #include <Arduino.h>
 /*
 #define LED_WEMOOS_D1_MINI 2  LED_BUILTIN // Pin D4 GPIO2
@@ -82,11 +81,13 @@
 
 #define RELAY_OFF HIGH
 #define RELAY_ON LOW
+#define ADDRESS 2
 /** End esp8266 d1_specific **/
 
 bool sensorLimIn, sensorLimOut;
-bool switchIn, switchOut;
 unsigned long holding, hold_stop;
+// Commands
+bool switchIn, switchOut, stop;
 char in_char;
 
 void loop2();
@@ -143,26 +144,37 @@ void setup()
 void loop()     //fast Loop
 {
 
-  const long debounce = 1000; // 0.2 s
-  const long debounce2 = 500; // 0.2 s
+  int iByte = 0; // for incoming serial data
+  const long debounce = 1000;
+  const long debounce2 = 500; // 0.5 s
   const long in_extend = 1000;
 
   //in_char = 'x';
-  if ((in_char == 'x') ){
-     while (Serial.available() > 0) {
-    // read incoming bytes, store last:
-         in_char = Serial.read();
-     }
+  //if ((in_char == 'x') ){
+  while (Serial.available() > 0) {
+      // read incoming bytes, store last:
+      iByte = Serial.read();
+      if (iByte == 'i' || iByte == 'I')
+          in_char = 'i';
+      else if (iByte == 'o' || iByte == 'O')
+          in_char = 'o';
+      else if (iByte == 's' || iByte == 'S')
+          in_char = 's';
+      //         else
+      //             in_char = 'x';
   }
-
-  if (Serial.available()){
+  //}
+  /*
+     if (Serial.available()){
     in_char = Serial.read();
   }
+*/
 
   sensorLimIn = digitalRead(LIMIT_IN);
   sensorLimOut = digitalRead(LIMIT_OUT);
-  switchIn = !digitalRead(RED_SWITCH) || (in_char=='i') || (in_char=='I'); // red
-  switchOut = !digitalRead(BLUE_SWITCH) || (in_char=='o') || (in_char=='O');  // blue
+  switchIn = !digitalRead(RED_SWITCH) || (in_char=='i'); // red
+  switchOut = !digitalRead(BLUE_SWITCH) || (in_char=='o');  // blue
+  stop = (in_char=='s');
   //switchIn = !digitalRead(RED_SWITCH); // red
   //switchOut = !digitalRead(BLUE_SWITCH);  // blue
 
@@ -314,16 +326,17 @@ void loop2() {
 void loop3() {
 
   static unsigned long lastTime = 0;
-  const long interval = 2000;
+  const long print_interval = 500;
   static bool led_state = 0;
 
   unsigned long now = millis();
 
-  if ( now - lastTime > interval ) {
+  if ( now - lastTime > print_interval ) {
     //state = 1;
     lastTime = now;
      //Serial.print(state);
-    Serial.print(F("1, "));
+    Serial.print(ADDRESS);
+    Serial.print(F(", "));
     Serial.print(getStateName(state));
     Serial.print(F(", Char:"));
     Serial.print(in_char);
