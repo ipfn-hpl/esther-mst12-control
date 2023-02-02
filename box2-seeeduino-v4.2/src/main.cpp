@@ -101,267 +101,270 @@ unsigned long holding, hold_stop;
 bool switchIn, switchOut, stop;
 char in_char;
 
-void loop2();
-void loop3();
+void led_loop();
+void print_loop();
+
 
 enum arm_state
 {
-  stopped,
-  moving_in,
-  moving_out,
-  fully_closed,
-  fully_open,
-  error
+    stopped,
+    moving_in,
+    moving_out,
+    fully_closed,
+    fully_open,
+    error
 } state;
 
 const char* getStateName(enum arm_state state)
 {
-   switch (state)
-   {
-      case stopped: return    "Stopped";
-      case moving_in: return  "MovingIn";
-      case moving_out: return "MovingOut";
-      case fully_closed: return "Closed";
-      case fully_open: return  "Open";
-      case error: return  "Error";
-      default: return "";
-   }
+    switch (state)
+    {
+        case stopped: return    "Stopped";
+        case moving_in: return  "MovingIn";
+        case moving_out: return "MovingOut";
+        case fully_closed: return "Closed";
+        case fully_open: return  "Open";
+        case error: return  "Error";
+        default: return "";
+    }
 }
 
 void setup()
 {
-  // initialize LED digital pin as an output.
-  pinMode(LED_BUILTIN, OUTPUT);
-  pinMode(LED_OUT, OUTPUT);
-  pinMode(LED_IN, OUTPUT);
-  pinMode(RELAY_IN, OUTPUT);
-  pinMode(RELAY_OUT, OUTPUT);
+    // initialize LED digital pin as an output.
+    pinMode(LED_BUILTIN, OUTPUT);
+    pinMode(LED_OUT, OUTPUT);
+    pinMode(LED_IN, OUTPUT);
+    pinMode(RELAY_IN, OUTPUT);
+    pinMode(RELAY_OUT, OUTPUT);
 
-  pinMode(BLUE_SWITCH, INPUT_PULLUP); //
-  pinMode(RED_SWITCH, INPUT_PULLUP);
-
-  pinMode(LIMIT_OUT, INPUT_PULLUP);
-  pinMode(LIMIT_IN,  INPUT_PULLUP);
-
-  state = stopped;
-  // Start serial port
-  Serial.begin(115200);
-  in_char = 'x';
-}
-
-void loop() {    //fast Loop
-
-  int iByte; // for incoming serial data
-  const long debounce = 1000; // 0.2 s
-  const long debounce2 = 500; // 0.2 s
-  const long in_extend = 1000;
-
-  //if ((in_char == 'x') ){
-  while (Serial.available() > 0) {
-      // read incoming bytes, store last:
-      iByte = Serial.read();
-      if (iByte == 'i' || iByte == 'I')
-          in_char = 'i';
-      else if (iByte == 'o' || iByte == 'O')
-          in_char = 'o';
-      else if (iByte == 's' || iByte == 'S')
-          in_char = 's';
-      //         else
-      //             in_char = 'x';
-  }
-  //}
-  
-  sensorLimIn = digitalRead(LIMIT_IN);
-  sensorLimOut = digitalRead(LIMIT_OUT);
-  switchIn = !digitalRead(RED_SWITCH) || (in_char=='i'); // red
-  switchOut = !digitalRead(BLUE_SWITCH) || (in_char=='o');  // blue
-  stop = (in_char=='s');
-
-  unsigned long now = millis();
-
-  switch (state)
-  {
-  case stopped:
     digitalWrite(RELAY_IN, RELAY_OFF);
     digitalWrite(RELAY_OUT, RELAY_OFF);
-    digitalWrite(LED_OUT, LED_OFF);
-    digitalWrite(LED_IN, LED_OFF);
-    if (sensorLimIn && sensorLimOut )
-        state = error;
-    else if (sensorLimIn && !sensorLimOut )
-        state = fully_closed;
-    else if (!sensorLimIn && sensorLimOut )
-        state = fully_open;
-    else if (now > holding) {
-      if ( switchIn  && !sensorLimIn ){
-          holding = now + debounce;
-          state = moving_in;
-          Serial.println(F("STOP->MOV_IN"));
-          in_char = 'x';
-      }
-       else if (switchOut && !sensorLimOut){
+
+    pinMode(BLUE_SWITCH, INPUT_PULLUP);
+    pinMode(RED_SWITCH, INPUT_PULLUP);
+
+    pinMode(LIMIT_OUT, INPUT_PULLUP);
+    pinMode(LIMIT_IN,  INPUT_PULLUP);
+
+    state = stopped;
+    // Start serial port
+    Serial.begin(115200);
+    in_char = 'x';
+}
+
+void fast_loop()     //fast Loop
+{
+
+    int iByte = 0; // for incoming serial data
+    const long debounce = 1000;
+    //const long debounce2 = 500; // 0.5 s
+    const long in_extend = 1000;
+
+    //in_char = 'x';
+    //if ((in_char == 'x') ){
+    while (Serial.available() > 0) {
+        // read incoming bytes, store last:
+        iByte = Serial.read();
+        if (iByte == 'i' || iByte == 'I')
+            in_char = 'i';
+        else if (iByte == 'o' || iByte == 'O')
+            in_char = 'o';
+        else if (iByte == 's' || iByte == 'S')
+            in_char = 's';
+        //         else
+        //             in_char = 'x';
+    }
+
+    unsigned long now = millis();
+    sensorLimIn = digitalRead(LIMIT_IN);
+    sensorLimOut = digitalRead(LIMIT_OUT);
+    switchIn  = 0;
+    switchOut = 0;
+    if (in_char=='o'){
+        in_char   = 'x';
+        switchOut = 1;
+    }
+    else if ((now > holding) && !digitalRead(BLUE_SWITCH) ){
         holding = now + debounce;
-        in_char = 'x';
-        state = moving_out;
-      }
+        switchOut = 1;
     }
-    break;
-  case moving_in:
-    if (sensorLimIn && sensorLimOut )
-        state = error;
-    else {
-      digitalWrite(RELAY_IN, RELAY_ON);
-      digitalWrite(RELAY_OUT, RELAY_OFF);
-      digitalWrite(LED_OUT, LED_OFF); //
-      digitalWrite(LED_IN, LED_ON);
-      if (sensorLimIn){
-        hold_stop = now + in_extend;
-        state = fully_closed;
-      }
-      else if (( switchIn && (now > holding)) || switchOut){
-        holding = now + debounce2;
-        state = stopped;
-        Serial.println(F("MOV_IN->STOP")) ;
-        in_char = 'x';
-      }
+    else if (in_char=='i'){
+        in_char  = 'x';
+        switchIn = 1;
     }
-    break;
-  case moving_out:
-    if (sensorLimIn && sensorLimOut )
-        state = error;
-    else {
-      digitalWrite(RELAY_IN, RELAY_OFF);
-      digitalWrite(RELAY_OUT, RELAY_ON);
-      digitalWrite(LED_OUT, LED_ON);
-      digitalWrite(LED_IN, LED_OFF);
-      if (sensorLimOut){
-      //Serial.println(F("Moving->fully_open"));
-        state = fully_open;
-      }
+    else if ((now > holding) && !digitalRead(RED_SWITCH) ){
+        holding = now + debounce;
+        switchIn = 1;
+    }
 
-      if ((switchOut && (now > holding)) || switchIn){
-        holding = now + debounce2;
-        state = stopped;
+    //!digitalRead(RED_SWITCH) || (in_char=='i'); // red
+    //switchIn = !digitalRead(RED_SWITCH) || (in_char=='i'); // red
+    //switchOut = !digitalRead(BLUE_SWITCH) || (in_char=='o');  // blue
+    if (in_char=='s') {
         in_char = 'x';
-        //Serial.println(F("OUT->STOP"));
-      }
+        stop = 1;
     }
-    break;
-  case fully_closed:
-    if (sensorLimIn && sensorLimOut )
-        state = error;
-    else {
-      if (switchOut) {
-        state = moving_out;
-        in_char = 'x';
-      }
-      else if(now > hold_stop){
-        digitalWrite(RELAY_IN, RELAY_OFF);
-        digitalWrite(RELAY_OUT, RELAY_OFF);
-      }
-    }
-    break;
-  case fully_open:
-    if (sensorLimIn && sensorLimOut )
-        state = error;
-    else {
-      digitalWrite(RELAY_IN, RELAY_OFF);
-      digitalWrite(RELAY_OUT, RELAY_OFF);
-      // Blinking on loop2
-      if (switchIn) {
-        //holding = now + debounce2;
-        state = moving_in;
-        in_char = 'x';
-      }
-    }
-    break;
-  case error:
-      digitalWrite(RELAY_IN, RELAY_OFF);
-      digitalWrite(RELAY_OUT, RELAY_OFF);
-      if (sensorLimIn && !sensorLimOut )
-        state = fully_closed;
-      else if ( !sensorLimIn && sensorLimOut )
-        state = fully_open;
-      else if ( !sensorLimIn && !sensorLimOut )
-        state = stopped;
-    break;
-  default:;
-  }
+    //switchIn = !digitalRead(RED_SWITCH); // red
+    //switchOut = !digitalRead(BLUE_SWITCH);  // blue
 
-  loop3();  // Slow print loop
-  loop2();  // Slow blink loop
+
+    if (sensorLimIn && sensorLimOut )
+        state = error;
+
+    switch (state) {
+        case stopped:
+            digitalWrite(RELAY_IN, RELAY_OFF);
+            digitalWrite(RELAY_OUT, RELAY_OFF);
+            digitalWrite(LED_OUT, LED_OFF);
+            digitalWrite(LED_IN, LED_OFF);
+            if (sensorLimIn && !sensorLimOut )
+                state = fully_closed;
+            else if (!sensorLimIn && sensorLimOut )
+                state = fully_open;
+            else if ( switchIn && !sensorLimIn ) {
+                state = moving_in;
+                Serial.println(F("STOP->MOV_IN"));
+            }
+            else if (switchOut && !sensorLimOut)
+                state = moving_out;
+            break;
+        case moving_in:
+            digitalWrite(RELAY_IN, RELAY_ON);
+            digitalWrite(RELAY_OUT, RELAY_OFF);
+            digitalWrite(LED_OUT, LED_OFF); //
+            digitalWrite(LED_IN, LED_ON);
+            if (sensorLimIn) {
+                hold_stop = now + in_extend;
+                state = fully_closed;
+            }
+            else if ( switchIn || switchOut) {
+                state = stopped;
+                Serial.println(F("MOV_IN->STOP")) ;
+            }
+            break;
+        case moving_out:
+            digitalWrite(RELAY_IN, RELAY_OFF);
+            digitalWrite(RELAY_OUT, RELAY_ON);
+            digitalWrite(LED_OUT, LED_ON);
+            digitalWrite(LED_IN, LED_OFF);
+            if (sensorLimOut)
+                state = fully_open;
+            //Serial.println(F("Moving->fully_open"));
+
+            if (switchOut || switchIn)
+                state = stopped;
+            //Serial.println(F("OUT->STOP"));
+            break;
+        case fully_closed:
+            if(now > hold_stop) { // Extended Inbound travel
+                digitalWrite(RELAY_IN, RELAY_OFF);
+                digitalWrite(RELAY_OUT, RELAY_OFF);
+            }
+            if (switchOut)
+                state = moving_out;
+            break;
+        case fully_open:
+            digitalWrite(RELAY_IN, RELAY_OFF);
+            digitalWrite(RELAY_OUT, RELAY_OFF);
+            if (switchIn)
+                state = moving_in;
+            break;
+        case error:
+            digitalWrite(RELAY_IN, RELAY_OFF);
+            digitalWrite(RELAY_OUT, RELAY_OFF);
+            if (sensorLimIn && !sensorLimOut )
+                state = fully_closed;
+            else if ( !sensorLimIn && sensorLimOut )
+                state = fully_open;
+            else if ( !sensorLimIn && !sensorLimOut )
+                state = stopped;
+            break;
+        default:
+            state = stopped;
+    }
+
+}
+
+void loop() {
+
+    fast_loop();
+    print_loop();  // Slow print loop
+    led_loop();  // Slow blink loop
 }
 
 // Slow blink loop
-void loop2() {
+void led_loop() {
 
-  static unsigned long nextTime = 0;
-  const long interval = 200;
-  static bool led_state = LOW;
+    static unsigned long nextTime = 0;
+    const long interval = 200;
+    static bool led_state = LOW;
 
-  unsigned long now = millis();
+    unsigned long now = millis();
 
-  if ( now > nextTime ) {
-    nextTime = now + interval;
-    led_state = !led_state;
-    switch (state)
-    {
-      case fully_closed:
-          digitalWrite(LED_IN, led_state);
-          digitalWrite(LED_OUT, LED_OFF);
-        break;
-      case fully_open:
-          digitalWrite(LED_IN, LED_OFF);
-          digitalWrite(LED_OUT, led_state);
-        break;
-      case error:
-          digitalWrite(LED_IN, led_state);
-          digitalWrite(LED_OUT, led_state);
-      default:;
+    if ( now > nextTime ) {
+        nextTime = now + interval;
+        led_state = !led_state;
+        switch (state)
+        {
+            case fully_closed:
+                digitalWrite(LED_IN, led_state);
+                digitalWrite(LED_OUT, LED_OFF);
+                break;
+            case fully_open:
+                digitalWrite(LED_IN, LED_OFF);
+                digitalWrite(LED_OUT, led_state);
+                break;
+            case error:
+                digitalWrite(LED_IN, led_state);
+                digitalWrite(LED_OUT, led_state);
+            default:;
+        }
     }
-  }
 }
 
-void loop3() {
+void print_loop() {
 
-  static unsigned long lastTime = 0;
-  const long print_interval = 500;
-  static bool led_state = 0;
+    static unsigned long lastTime = 0;
+    const long print_interval = 500;
+    static bool led_state = 0;
 
-  unsigned long now = millis();
+    unsigned long now = millis();
 
-  if ( now - lastTime > print_interval ) {
-    //state = 1;
-    lastTime = now;
-     //Serial.print(state);
-    Serial.print(ADDRESS);
-    Serial.print(F(", "));
-    Serial.print(getStateName(state));
-    Serial.print(F(", Char:"));
-    Serial.print(in_char);
-    Serial.print(F(", SwIN:"));
-    Serial.print(switchIn, DEC);
-    Serial.print(F(", SwOUT:"));
-    Serial.print(switchOut, DEC);
-    Serial.print(F(", LimIN:"));
-    Serial.print(sensorLimIn, DEC);
-    Serial.print(F(", LimOUT:"));
-    Serial.print(sensorLimOut, DEC);
-    Serial.print(F(", Millis:"));
-    Serial.print(now, DEC);
-    Serial.print(F(", Holding:"));
-    Serial.println(holding, DEC);
-   /* Then, later in main: */
-  //printf("%s", getDayName(TheDay));
-   //Serial.println(F(" end"));
-     if (led_state ) {
-         digitalWrite(LED_BUILTIN, LOW);
-         led_state = 0;
-     }
-    else {
-         digitalWrite(LED_BUILTIN, HIGH);
-         led_state = 1;
+    if ( now - lastTime > print_interval ) {
+        //state = 1;
+        lastTime = now;
+        //Serial.print(state);
+        Serial.print(ADDRESS);
+        Serial.print(F(", "));
+        Serial.print(getStateName(state));
+        Serial.print(F(", Char:"));
+        Serial.print(in_char);
+        Serial.print(F(", SwIN:"));
+        Serial.print(switchIn, DEC);
+        Serial.print(F(", SwOUT:"));
+        Serial.print(switchOut, DEC);
+        Serial.print(F(", LimIN:"));
+        Serial.print(sensorLimIn, DEC);
+        Serial.print(F(", LimOUT:"));
+        Serial.print(sensorLimOut, DEC);
+        Serial.print(F(", Millis:"));
+        Serial.print(now, DEC);
+        Serial.print(F(", Holding:"));
+        Serial.println(holding, DEC);
+        /* Then, later in main: */
+        //printf("%s", getDayName(TheDay));
+        //Serial.println(F(" end"));
+        if (led_state ) {
+            digitalWrite(LED_BUILTIN, LOW);
+            led_state = 0;
+        }
+        else {
+            digitalWrite(LED_BUILTIN, HIGH);
+            led_state = 1;
+        }
     }
-  }
-  // printf("%s", getDayName(TheDay));
+    // printf("%s", getDayName(TheDay));
 }
+
+// vim: syntax=cpp ts=4 sw=4 sts=4 sr et
